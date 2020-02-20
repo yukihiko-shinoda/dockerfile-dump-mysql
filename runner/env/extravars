@@ -1,0 +1,5 @@
+---
+login_user: '{{ lookup("env","LOGIN_USER") }}'
+login_password: '{{ lookup("env","LOGIN_PASSWORD") }}'
+login_host: '{{ "database" if lookup("env","LOGIN_HOST") == "" else lookup("env","LOGIN_HOST") }}'
+login_port: '{{ 3306 if lookup("env","LOGIN_PORT") == "" else lookup("env","LOGIN_PORT") }}'

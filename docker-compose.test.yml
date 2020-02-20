@@ -1,0 +1,18 @@
+---
+version: '3.6'
+services:
+  sut:
+    build:
+      context: .
+    depends_on:
+      - database
+    environment:
+      LOGIN_USER: root
+      LOGIN_PASSWORD: p@ssW0rd
+
+  database:
+    container_name: database
+    environment:
+      MYSQL_ROOT_PASSWORD: p@ssW0rd
+      MYSQL_DATABASE: service
+    image: mysql

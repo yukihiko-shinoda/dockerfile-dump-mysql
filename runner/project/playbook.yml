@@ -1,0 +1,38 @@
+---
+- hosts: default
+  become: yes
+  tasks:
+    - name: Configure mysql client
+      template:
+        src: .my.cnf.j2
+        dest: /root/.my.cnf
+        owner: root
+        group: root
+        mode: 0600
+
+    - name: Wait for starting MySQL service
+      wait_for:
+        host: '{{ login_host }}'
+        port: '{{ login_port }}'
+        timeout: 15
+
+    - name: List up databases
+      command: mysql --defaults-extra-file=/root/.my.cnf --host='{{ login_host }}' --port={{ login_port }} --skip-column-names --execute="show databases;"
+    # 2020-02-20 mysql_info module can't detect user database...
+    # - mysql_info:
+    #     config_file: /root/.my.cnf
+    #     login_host: '{{ login_host }}'
+    #     login_port: '{{ login_port }}'
+    #     filter: databases
+      register: mysql_info_databases
+
+    - set_fact:
+        user_databases: '{{ mysql_info_databases.stdout_lines|reject("in", ["information_schema", "mysql", "performance_schema", "sys"])|list }}'
+
+    - name: Ensure that user database is defined
+      fail:
+        msg: No user database is defined.
+      when: user_databases|length == 0
+
+    - name: Dump user databases
+      shell: mysqldump --defaults-extra-file=/root/.my.cnf --host={{ login_host }} --port={{ login_port }} --databases {{ user_databases|join(' ') }} > /root/storage/mysql_dump_blog_$(date '+%Y%m%d%H%M%S').sql
